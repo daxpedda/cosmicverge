@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use cosmicverge_shared::{
     protocol::{
-        ActivePilot, CosmicVergeRequest, CosmicVergeResponse, Pilot, PilotLocation, PilotingAction,
+        ActivePilot, Request, Response, Pilot, PilotLocation, Action,
         SolarSystemLocation, SolarSystemLocationId,
     },
     solar_systems::{universe, Named, SolarSystemId},
@@ -153,8 +153,8 @@ impl Component for App {
                 }
             }
             Message::NavigateToLocation(system, location_id) => {
-                self.api.send(AgentMessage::Request(CosmicVergeRequest::Fly(
-                    PilotingAction::NavigateTo(PilotLocation {
+                self.api.send(AgentMessage::Request(Request::Fly(
+                    Action::NavigateTo(PilotLocation {
                         system,
                         location: SolarSystemLocation::Docked(location_id),
                     }),
@@ -182,18 +182,18 @@ impl Component for App {
                     }
                 }
                 AgentResponse::Response(response) => match response {
-                    CosmicVergeResponse::ServerStatus { connected_pilots } => {
+                    Response::ServerStatus { connected_pilots } => {
                         self.connected_pilots = Some(connected_pilots);
                         true
                     }
-                    CosmicVergeResponse::Authenticated { user_id, pilots } => {
+                    Response::Authenticated { user_id, pilots } => {
                         if let Some(last_pilot) = &self.last_pilot {
                             self.user = Some(Arc::new(LoggedInUser {
                                 user_id,
                                 pilot: PilotingState::Reconnecting,
                             }));
                             self.api
-                                .send(AgentMessage::Request(CosmicVergeRequest::SelectPilot(
+                                .send(AgentMessage::Request(Request::SelectPilot(
                                     last_pilot.id,
                                 )));
                         } else {
@@ -204,7 +204,7 @@ impl Component for App {
                         }
                         true
                     }
-                    CosmicVergeResponse::PilotChanged(active_pilot) => {
+                    Response::PilotChanged(active_pilot) => {
                         self.last_pilot = Some(active_pilot.pilot.clone());
                         let user = self.user.as_ref().expect("The server should never send this without us being Authenticated first");
 

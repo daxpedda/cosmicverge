@@ -2,7 +2,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 
 use database::{
     basws_server::{prelude::Uuid, Handle, Server},
-    cosmicverge_shared::protocol::CosmicVergeResponse,
+    cosmicverge_shared::protocol::Response,
     schema::{convert_db_pilots, Pilot},
 };
 use futures::StreamExt as _;
@@ -67,7 +67,7 @@ async fn wait_for_messages(
                     websockets
                         .send_to_installation_id(
                             installation_id,
-                            CosmicVergeResponse::Authenticated { user_id, pilots },
+                            Response::Authenticated { user_id, pilots },
                         )
                         .await;
                 }
@@ -76,7 +76,7 @@ async fn wait_for_messages(
                 let connected_pilots: usize = payload.parse()?;
                 CONNECTED_CLIENTS.store(connected_pilots, Ordering::Relaxed);
                 websockets
-                    .broadcast(CosmicVergeResponse::ServerStatus { connected_pilots })
+                    .broadcast(Response::ServerStatus { connected_pilots })
                     .await;
             }
             "system_update_complete" => {
@@ -94,7 +94,7 @@ async fn wait_for_messages(
                         {
                             let cache = LocationStore::lookup(pilot_id).await;
                             let _ = client
-                                .send_response(CosmicVergeResponse::SpaceUpdate {
+                                .send_response(Response::SpaceUpdate {
                                     ships: system_updates
                                         .get(&cache.location.system)
                                         .cloned()
